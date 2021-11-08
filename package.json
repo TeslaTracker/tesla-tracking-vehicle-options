@@ -1,0 +1,17 @@
+{
+  "name": "tesla-tracking-vehicle-options",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "scripts": {
+    "start": "ts-node app.ts",
+    "start-env": "env-cmd -f .env ts-node app.ts",
+    "test": "mocha -r ts-node/register 'test/**/*.ts'"
+  },
+  "repository": "https://github.com/TeslaTracker/tesla-tracking-vehicle-options",
+  "author": "Cyriaque DELAUNAY <cyriaquedelaunay@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
+  }
+}
