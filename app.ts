@@ -1,11 +1,22 @@
-const size = 250;
+const size = {
+  height: 140,
+  width: 250,
+};
 const model = '3a1d1c6cdccb462405eee5db90fcbd39';
 const alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+import axios from 'axios';
 import colors from 'colors';
 import { Command } from 'commander';
+import IModel3 from './interfaces/Model3.interface';
+import ITeslaCar from './interfaces/TeslaCar.interface';
 import { model3 } from './library';
+import { readFile, readJsonSync, writeJsonSync } from 'fs-extra';
+import simpleGit from 'simple-git';
+
+const manifestData = readJsonSync('./manifest.json');
+
 const program = new Command();
-const urlBase = `https://static-assets.tesla.com/configurator/compositor/?model=%model%&options=%options%&bkba_opt=0&view=STUD_3QTR&size=${size}`;
+const urlBase = `https://static-assets.tesla.com/configurator/compositor/?model=%model%&options=%options%&bkba_opt=0&view=STUD_3QTR&size=${size.width}`;
 
 // cli config
 program
@@ -15,21 +26,23 @@ program
 
 program.parse(process.argv);
 const options = program.opts();
-const carOptions = [];
 
-console.log(options);
-
-for (const optionName in model3.options) {
-  if (Object.prototype.hasOwnProperty.call(model3.options, optionName)) {
-    const option = model3.options[optionName][0];
-    if (option) {
-      carOptions.push(option);
-    }
-  }
+if (manifestData.lastScannedIndex) {
+  console.log(`${colors.cyan(`Last scanned index: ${colors.white(manifestData.lastScannedIndex)}`)}`);
+  options.startIndex = manifestData.lastScannedIndex;
 }
 
-const url = urlBase.replace('%model%', model).replace('%options%', carOptions.join(','));
-console.log(url);
+searchNewColors().then(async (colors) => {
+  if (colors.length > 0) {
+    console.log(`${colors.length} new colors found`);
+    manifestData.colors = manifestData.colors.concat(colors);
+  }
+
+  manifestData.lastScannedIndex = parseInt(options.startIndex) + parseInt(options.indexLength);
+  await updateManifest(manifestData);
+});
+
+// const url = urlBase.replace('%model%', model).replace('%options%', carOptions.join(','));
 
 function generatePossibilitiesArray(inputs: any[], length: number, base: string = ''): string[] {
   // each letter of the alphabet
@@ -49,9 +62,121 @@ function generatePossibilitiesArray(inputs: any[], length: number, base: string 
   return list;
 }
 
-console.log(`${colors.cyan(`Looking for new colors`)}`);
-console.log(`${colors.cyan(`Starting at index ${colors.white(options.startIndex)}`)}`);
-console.log(`${colors.cyan(`Fetching ${colors.white(options.indexLength)} items`)}`);
+async function searchNewColors(): Promise<string[]> {
+  return new Promise(async (resolve) => {
+    const foundColors: string[] = [];
+    console.log(`${colors.cyan(`Looking for new colors`)}`);
+    console.log(`${colors.cyan(`Starting at index ${colors.white(options.startIndex)}`)}`);
+    console.log(`${colors.cyan(`Fetching ${colors.white(options.indexLength)} items`)}`);
 
-// generate the potential list of colors ids
-const colorIds = generatePossibilitiesArray(alphabet, 4, 'P').length;
+    // generate the potential list of colors ids
+    const colorIds = generatePossibilitiesArray(alphabet, 4, 'P');
+
+    const startIndex = parseInt(options.startIndex) || 0;
+    const indexLength = parseInt(options.indexLength) || 10;
+
+    const splice = colorIds.splice(startIndex, indexLength);
+
+    console.log(`${colors.cyan(`Scanning ${colors.white(String(splice.length))} potential colors`)}`);
+
+    for (const colorId of splice) {
+      const url = getUrlForColor(colorId);
+
+      try {
+        const imageFile = await getImage(url);
+        const templateImage = await readFile('./template_m3.jpg');
+        if (await imagesAreIdentical(imageFile, templateImage)) {
+          console.log(colorId, `[EMPTY]`);
+        } else {
+          console.log(`${colors.green(`Wait ... WTF - we found a new color ${colors.white(colorId)} !`)}`);
+          foundColors.push(colorId);
+        }
+        waitFor(options.delay);
+      } catch (error) {
+        console.log(`${colors.red(`Error fetching ${colors.white(url)}`)}`);
+        console.log(error);
+        waitFor(options.delay);
+        continue;
+      }
+    }
+
+    return resolve(foundColors);
+  });
+}
+
+async function waitFor(time: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
+}
+
+function getImage(url: string): Promise<Buffer> {
+  console.log(`${colors.cyan(`Fetching ${colors.white(url)}`)}`);
+
+  return new Promise((resolve, reject) => {
+    axios
+      .get(url, { responseType: 'arraybuffer' })
+      .then((response) => {
+        const buffer = Buffer.from(response.data, 'base64');
+
+        return resolve(buffer);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
+async function imagesAreIdentical(image1: Buffer, image2: Buffer): Promise<boolean> {
+  return new Promise(async (resolve) => {
+    return resolve(Buffer.compare(image1, image2) === 0);
+  });
+}
+
+function getUrlForColor(colorId: string): string {
+  const carTemplate: IModel3 = { ...model3 };
+  carTemplate.config = {
+    paint: colorId,
+    rearSpoiler: carTemplate.options.rearSpoiler[0],
+    seats: carTemplate.options.seats[0],
+    wheels: carTemplate.options.wheels[0],
+  };
+
+  const carOptionsStr = carConfigToArray(carTemplate).join(',');
+
+  const url = urlBase.replace('%model%', model).replace('%options%', carOptionsStr);
+  return url;
+}
+
+function carConfigToArray(car: ITeslaCar): string[] {
+  const carConfig: string[] = [];
+
+  for (const optionName in car.config) {
+    if (!car.config) {
+      return [];
+    }
+    if (Object.prototype.hasOwnProperty.call(car.config, optionName)) {
+      const option = car.config[optionName];
+      if (option) {
+        carConfig.push(option);
+      }
+    }
+  }
+  return carConfig;
+}
+
+/**
+ * Update the manifest and commit the changes
+ * @param data
+ */
+async function updateManifest(data: any) {
+  console.log(`${colors.cyan(`Updating manifest`)}`);
+  writeJsonSync('./manifest.json', data);
+  console.log(`${colors.cyan(`Commiting changes`)}`);
+  const git = simpleGit();
+  await git.cwd(__dirname);
+  await git.add('-A');
+  await git.commit('Manifest Updated');
+}
