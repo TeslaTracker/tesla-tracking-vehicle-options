@@ -22,6 +22,7 @@ const urlBase = `https://static-assets.tesla.com/configurator/compositor/?model=
 program
   .option('-si, --startIndex <index>', 'Starting index', '0')
   .option('-il, --indexLength <length>', 'Number of item to fetch', '10')
+  .option('-d, --dev', 'Dev mode')
   .option('--delay <delay>', 'Time to wait between queries (ms)', '1000');
 
 program.parse(process.argv);
@@ -172,6 +173,11 @@ function carConfigToArray(car: ITeslaCar): string[] {
  * @param data
  */
 async function updateManifest(data: any) {
+  if (options.dev) {
+    console.log(`${colors.yellow(`Dev mode - not committing changes`)}`);
+    return;
+  }
+
   console.log(`${colors.cyan(`Updating manifest`)}`);
   writeJsonSync('./manifest.json', data);
   console.log(`${colors.cyan(`Commiting changes`)}`);
