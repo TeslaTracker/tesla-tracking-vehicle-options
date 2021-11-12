@@ -95,7 +95,6 @@ async function searchNewColors(): Promise<string[]> {
         waitFor(options.delay);
       } catch (error) {
         console.log(`${colors.red(`Error fetching ${colors.white(url)}`)}`);
-        console.log(error);
         waitFor(options.delay);
         continue;
       }
