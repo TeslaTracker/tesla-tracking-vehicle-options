@@ -8,7 +8,7 @@ export const model3: IModel3 = {
       'PBSB' /* Black */,
       'PPSB' /* Deep blue */,
       'PMBL' /* Obsidian black */,
-      'PMDB' /* Black (placeholder ? ) */
+      'PMDB' /* Black (placeholder ? ) */,
       'PMNG' /* Midnight silver */,
       'PMSS' /* Starlight Silver */,
       'PPSW' /* Pearl white */,
