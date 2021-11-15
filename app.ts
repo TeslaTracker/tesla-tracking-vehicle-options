@@ -73,7 +73,13 @@ async function searchNewColors(): Promise<string[]> {
     // generate the potential list of colors ids
     const colorIds = generatePossibilitiesArray(alphabet, 4, 'P');
 
-    const startIndex = parseInt(options.startIndex) || 0;
+    let startIndex = parseInt(options.startIndex) || 0;
+
+    // if we reached the end, reset
+    if (!colorIds[startIndex]) {
+      startIndex = 0;
+    }
+
     const indexLength = parseInt(options.indexLength) || 10;
 
     const splice = colorIds.splice(startIndex, indexLength);
