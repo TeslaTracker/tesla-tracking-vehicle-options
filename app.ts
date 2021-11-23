@@ -36,7 +36,15 @@ if (manifestData.lastScannedIndex) {
 searchNewColors().then(async (res) => {
   if (res.colors.length > 0) {
     console.log(`${res.colors.length} new colors found`);
-    manifestData.colors = manifestData.colors.concat(colors);
+
+    for (const color of res.colors) {
+      console.log(`${colors.green(`=> ${colors.white(color)}`)}`);
+      if (manifestData.colors.indexOf(color) === -1) {
+        manifestData.colors.push(color);
+      } else {
+        console.log(`${colors.yellow(`${colors.white(color)} already in manifest`)}`);
+      }
+    }
   }
 
   manifestData.lastScannedIndex = parseInt(options.startIndex) + parseInt(options.indexLength);
