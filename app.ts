@@ -206,6 +206,6 @@ async function updateManifest(data: any) {
   const git = simpleGit();
   await git.cwd(__dirname);
   await git.add('-A');
-  await git.commit(`Manifest Updated -index ${manifestData.lastScannedIndex}`);
+  await git.commit(`Manifest Updated - index ${manifestData.lastScannedIndex}`);
   await git.push('origin', 'master', ['--force']);
 }
