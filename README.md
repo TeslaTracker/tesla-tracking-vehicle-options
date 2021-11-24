@@ -9,7 +9,9 @@ Each option is associated with an internal code
 
 This code is referenced in both the configurator (with a $ prefix) and the image API (see example link above)
 
-### `Colors`
+Some interesting ones :
+
+### [`Colors`](https://github.com/TeslaTracker/tracking-tesla-website/blob/master/model3/design.json#L1899)
 
 | Label | Code |
 | ------ | ----------- |
@@ -21,3 +23,15 @@ This code is referenced in both the configurator (with a $ prefix) and the image
 | Starlight Silver    | PMSS |
 | Pearl White | PPSW |
 | Red | PPMR |
+
+### [`Wheels`](https://github.com/TeslaTracker/tracking-tesla-website/blob/master/model3/design.json#L1919)
+
+| Label | Code |
+| ------ | ----------- |
+| 18' Aero   | W38B |
+| 19' Sport | W39B |
+| 19' Performance    | W39P |
+| 20' Sport   | W32P |
+| 20' Sport Gray Performance | W32D |
+| 20' Uberturbine | W33D |
+| No wheels ? lol | WT00 |
