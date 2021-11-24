@@ -8,6 +8,7 @@ Also: https://damieng.github.io/tesla-preview/?model=my&MTY04=n&view=STUD_3QTR&b
 Each option is associated with an internal code
 
 This code is referenced in both the configurator (with a $ prefix) and the image API
+
 Example link : https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PBSB,WY18B,INYPB,MTY03&bkba_opt=0&view=STUD_3QTR&size=1519
 
 Some interesting ones :
