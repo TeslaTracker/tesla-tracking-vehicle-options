@@ -5,36 +5,35 @@ Thanks to /u/KemmeyReddit from this [reddit post](https://www.reddit.com/r/tesla
 
 Also: https://damieng.github.io/tesla-preview/?model=my&MTY04=n&view=STUD_3QTR&background-m3=0&flip=n&paint=PBSB&wheels=WY18B&SLR1=n&seats=INYPB&extras=
 
-## Known paint 
+Each option is associated with an internal code
 
-### `Black`
+This code is referenced in both the configurator (with a $ prefix) and the image API
 
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PBSB,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
+Example link : https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PBSB,WY18B,INYPB,MTY03&bkba_opt=0&view=STUD_3QTR&size=1519
 
-### `Deep Blue`
+Some interesting ones :
 
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PPSB,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
+### [`Colors`](https://github.com/TeslaTracker/tracking-tesla-website/blob/master/model3/design.json#L1899)
 
-### `Obsidian black`
+| Label | Code |
+| ------ | ----------- |
+| Black   | PBSB |
+| Deep Blue | PPSB |
+| Obsidian Black    | PMBL |
+| Unknown (placeholder ?)   | PMDB |
+| Midnight Silver | PMNG |
+| Starlight Silver    | PMSS |
+| Pearl White | PPSW |
+| Red | PPMR |
 
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PMBL,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
+### [`Wheels`](https://github.com/TeslaTracker/tracking-tesla-website/blob/master/model3/design.json#L1919)
 
-### `PMDB (Placeholder)`
-
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PMDB,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
-
-### `Midnight silver`
-
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PMNG,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
-
-### `Starlight Silver`
-
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PMSS,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
-
-### `Pearl White`
-
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PPSW,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
-
-### `Red`
-
-<img src="https://static-assets.tesla.com/configurator/compositor/?model=3a1d1c6cdccb462405eee5db90fcbd39&options=PPMR,IN3PB,W38B&bkba_opt=0&view=STUD_3QTR&size=500" width="500">
+| Label | Code |
+| ------ | ----------- |
+| 18' Aero   | W38B |
+| 19' Sport | W39B |
+| 19' Performance    | W39P |
+| 20' Sport   | W32P |
+| 20' Sport Gray Performance | W32D |
+| 20' Uberturbine | W33D |
+| No wheels ? lol | WT00 |

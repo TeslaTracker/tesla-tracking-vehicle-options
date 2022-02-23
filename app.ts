@@ -33,13 +33,26 @@ if (manifestData.lastScannedIndex) {
   options.startIndex = manifestData.lastScannedIndex;
 }
 
-searchNewColors().then(async (colors) => {
-  if (colors.length > 0) {
-    console.log(`${colors.length} new colors found`);
-    manifestData.colors = manifestData.colors.concat(colors);
+searchNewColors().then(async (res) => {
+  if (res.colors.length > 0) {
+    console.log(`${res.colors.length} new colors found`);
+
+    for (const color of res.colors) {
+      console.log(`${colors.green(`=> ${colors.white(color)}`)}`);
+      if (manifestData.colors.indexOf(color) === -1) {
+        manifestData.colors.push(color);
+      } else {
+        console.log(`${colors.yellow(`${colors.white(color)} already in manifest`)}`);
+      }
+    }
   }
 
   manifestData.lastScannedIndex = parseInt(options.startIndex) + parseInt(options.indexLength);
+
+  if (res.reset) {
+    console.log(`${colors.yellow(`Last index reached, reseting indexes`)}`);
+    manifestData.lastScannedIndex = 0;
+  }
   await updateManifest(manifestData);
 });
 
@@ -63,8 +76,9 @@ function generatePossibilitiesArray(inputs: any[], length: number, base: string 
   return list;
 }
 
-async function searchNewColors(): Promise<string[]> {
+async function searchNewColors(): Promise<{ colors: string[]; reset?: boolean }> {
   return new Promise(async (resolve) => {
+    let shouldReset = false;
     const foundColors: string[] = [];
     console.log(`${colors.cyan(`Looking for new colors`)}`);
     console.log(`${colors.cyan(`Starting at index ${colors.white(options.startIndex)}`)}`);
@@ -77,7 +91,7 @@ async function searchNewColors(): Promise<string[]> {
 
     // if we reached the end, reset
     if (!colorIds[startIndex]) {
-      startIndex = 0;
+      shouldReset = true;
     }
 
     const indexLength = parseInt(options.indexLength) || 10;
@@ -106,7 +120,10 @@ async function searchNewColors(): Promise<string[]> {
       }
     }
 
-    return resolve(foundColors);
+    return resolve({
+      colors: foundColors,
+      reset: shouldReset,
+    });
   });
 }
 
@@ -189,6 +206,6 @@ async function updateManifest(data: any) {
   const git = simpleGit();
   await git.cwd(__dirname);
   await git.add('-A');
-  await git.commit(`Manifest Updated -index ${manifestData.lastScannedIndex}`);
+  await git.commit(`Manifest Updated - index ${manifestData.lastScannedIndex}`);
   await git.push('origin', 'master', ['--force']);
 }
