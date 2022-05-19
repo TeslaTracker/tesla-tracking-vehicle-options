@@ -27,3 +27,4 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: | # Scan 30 colors and wait 500 ms between each query
           yarn start --model model3 --lang en-US
+          yarn start --model model3 --lang fr-FR
