@@ -111,7 +111,7 @@ export function getOptionsFromStore(storeData: IStoreData, lang: string, model: 
  * @param {string} lang en-US fr-FR
  * @returns
  */
-export async function getRawStoreData(lang: string = 'en-US', vehicleModel: string = 'model3'): Promise<object> {
+export async function getRawStoreData(lang: string, vehicleModel: string): Promise<object> {
   logger.log('info', 'Scrapping store data');
 
   const browser = await puppeteer.launch({
@@ -188,4 +188,38 @@ function getDataFromStoreData(storeData: any) {
   }
 
   return newStoreData;
+}
+
+export function getModelShort(model: string) {
+  switch (model) {
+    case 'model3':
+      return 'm3';
+    case 'modelx':
+      return 'mx';
+    case 'modely':
+      return 'mx';
+    default:
+      return '';
+  }
+}
+
+export function getDefaultStoreData(model: string): IStoreData {
+  const short = getModelShort(model);
+  return {
+    effective_date: {
+      path: ['DSServices', `Lexicon.${short}`, 'effective_date'],
+    },
+    baseConfig: {
+      path: ['DSServices', `Lexicon.${short}`, 'base_configuration'],
+    },
+    option_group: {
+      path: ['DSServices', `Lexicon.${short}`, 'groups'],
+    },
+    options: {
+      path: ['DSServices', `Lexicon.${short}`, 'options'],
+    },
+    currency: {
+      path: ['DSServices', 'Lexicon.m3', 'metadata', 'currency_code'],
+    },
+  };
 }
