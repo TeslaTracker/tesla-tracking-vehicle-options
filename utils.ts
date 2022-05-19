@@ -197,7 +197,9 @@ export function getModelShort(model: string) {
     case 'modelx':
       return 'mx';
     case 'modely':
-      return 'mx';
+      return 'my';
+    case 'models':
+      return 'ms';
     default:
       return '';
   }

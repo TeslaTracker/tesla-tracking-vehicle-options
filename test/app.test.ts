@@ -28,4 +28,12 @@ describe('Scrap data', () => {
     const storeData = hydrateStoreData(rawData, defaultStoreData);
     expect(storeData.options.data.$PBSB).to.be.an('object');
   });
+
+  // it('should scrap data for a modely in English', async () => {
+  //   const defaultStoreData = getDefaultStoreData('modelx');
+  //   const rawData = await getRawStoreData('en-US', 'modely');
+  //   expect(rawData).to.be.an('object');
+  //   const storeData = hydrateStoreData(rawData, defaultStoreData);
+  //   expect(storeData.options.data.$PBSB).to.be.an('object');
+  // });
 });
