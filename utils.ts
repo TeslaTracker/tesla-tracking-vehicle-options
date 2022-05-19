@@ -43,6 +43,7 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
   const saveSnapshot = await supabase.from<IVehicleOptionSnapshot>('vehicle_options_snapshots').insert({
     code: option.code,
     lang: option.lang,
+    vehicle_model: option.vehicle_model,
     data: option.raw_data,
   });
 
