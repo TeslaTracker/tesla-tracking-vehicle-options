@@ -28,5 +28,7 @@ jobs:
         run: | # Scan 30 colors and wait 500 ms between each query
           yarn start --model model3 --lang en-US
           yarn start --model model3 --lang fr-FR
+          yarn start --model model3 --lang es-ES
           yarn start --model modelx --lang en-US
           yarn start --model modelx --lang fr-FR
+          yarn start --model modelx --lang es-ES
