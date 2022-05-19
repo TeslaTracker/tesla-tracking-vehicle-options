@@ -1,0 +1,21 @@
+name: Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: yarn install
+        run: |
+          yarn
+      - name: yarn test
+        run: | # Scan 30 colors and wait 500 ms between each query
+          yarn test --test
