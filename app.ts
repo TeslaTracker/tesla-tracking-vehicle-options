@@ -8,7 +8,10 @@ import logger from './logger';
 
 const program = new Command();
 // cli config
-program.option('-l, --lang <lang>', 'lang to check', 'en-GB').option('-m, --model <model>', 'Vehicle model to check', 'model3');
+program
+  .option('-l, --lang <lang>', 'lang to check', 'en-GB')
+  .option('-m, --model <model>', 'Vehicle model to check', 'model3')
+  .option('-t, --test', 'Test mode');
 program.parse(process.argv);
 const programOpt = program.opts();
 

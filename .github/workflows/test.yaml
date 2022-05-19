@@ -13,9 +13,9 @@ jobs:
         with:
           node-version: 15
 
-      - name: yarn test
+      - name: yarn install
         run: |
           yarn
       - name: yarn test
         run: | # Scan 30 colors and wait 500 ms between each query
-          yarn test
+          yarn test --test
