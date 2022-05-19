@@ -1,0 +1,28 @@
+name: Scan options
+on:
+  schedule:
+    # At minute 0 past every 3rd hour.
+    # https://crontab.guru/every-3-hours
+    - cron: "0 */3 * * *"
+jobs:
+  search-colors:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: Yarn install
+        run: |
+          yarn
+      - name: yarn start
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: | # Scan 30 colors and wait 500 ms between each query
+          yarn start --model model3 --lang en-US
