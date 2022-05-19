@@ -1,5 +1,6 @@
 name: Scan options
 on:
+  workflow_dispatch:
   schedule:
     # At minute 0 past every 3rd hour.
     # https://crontab.guru/every-3-hours
