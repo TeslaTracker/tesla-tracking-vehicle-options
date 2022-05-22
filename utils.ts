@@ -67,6 +67,7 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
     is_available: true,
     vehicle_model: option.vehicle_model,
     data: option.data,
+    updated_at: new Date(),
   });
 
   if (saveOption.error) {
