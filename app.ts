@@ -5,16 +5,20 @@ import { getDefaultStoreData, getOptionsFromStore, getRawStoreData, hydrateStore
 import { Command } from 'commander';
 import logger from './logger';
 
+const langs = ['fr-FR', 'en-GB', 'en-US', 'de-DE', 'es-ES'];
+const vehicles = ['m3', 'my', 'ms', 'mx'];
+
+const randLang = langs[Math.floor(Math.random() * langs.length)];
+const randVehicle = vehicles[Math.floor(Math.random() * vehicles.length)];
+
 const program = new Command();
 // cli config
 program
-  .option('-l, --lang <lang>', 'lang to check', 'en-GB')
-  .option('-m, --model <model>', 'Vehicle model to check', 'model3')
+  .option('-l, --lang <lang>', 'lang to check', randLang)
+  .option('-m, --model <model>', 'Vehicle model to check (short format : ms m3 mx ...)', randVehicle)
   .option('-t, --test', 'Test mode');
 program.parse(process.argv);
 const programOpt = program.opts();
-
-const models = ['m3', 'my'];
 
 const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_SERVICE_KEY || '');
 
@@ -33,7 +37,7 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   logger.log('info', `Language: ${programOpt.lang} - Model: ${programOpt.model}`);
   const rawStoreData = await getRawStoreData(programOpt.lang, programOpt.model);
 
-  const defaultStoreData = getDefaultStoreData(programOpt.lang);
+  const defaultStoreData = getDefaultStoreData(programOpt.model);
 
   const storeData = hydrateStoreData(rawStoreData, defaultStoreData);
   const options = getOptionsFromStore(storeData, programOpt.lang, programOpt.model);

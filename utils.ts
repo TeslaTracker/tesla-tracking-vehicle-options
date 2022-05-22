@@ -3,9 +3,10 @@ import deepEqual from 'deep-equal';
 import objectPath from 'object-path';
 import IStoreData from './interfaces/StoreData.interface';
 import IVehicleOption, { IVehicleOptionDb } from './interfaces/VehicleOption.interface';
-import IVehicleOptionSnapshot from './interfaces/VehicleOptionSnapshot.interface';
 import puppeteer from 'puppeteer';
 import logger from './logger';
+import { detailedDiff } from 'deep-object-diff';
+import IVehicleOptionChange from './interfaces/VehicleOptionChange.interface';
 
 export async function saveStoreOptions(options: IVehicleOption[], supabase: SupabaseClient) {
   logger.log('info', 'Saving store options...');
@@ -17,38 +18,39 @@ export async function saveStoreOptions(options: IVehicleOption[], supabase: Supa
 export async function saveStoreOption(option: IVehicleOption, supabase: SupabaseClient) {
   // retrieve the last snapshot for this option
   const lastSnapsnotResponse = await supabase
-    .from<IVehicleOptionSnapshot>('vehicle_options_snapshots')
+    .from<IVehicleOption>('vehicle_options')
     .select('data')
     .eq('code', option.code)
     .eq('lang', option.lang)
     .eq('vehicle_model', option.vehicle_model)
-    .order('created_at', {
-      ascending: false,
-    })
     .limit(1);
+
+  let savedOption: IVehicleOption | null = null;
 
   // check if the last snapshot of this option is identical
   if (lastSnapsnotResponse.data && lastSnapsnotResponse.data[0]) {
-    const snap = lastSnapsnotResponse.data[0];
+    savedOption = lastSnapsnotResponse.data[0];
 
-    if (deepEqual(snap.data, option.raw_data)) {
-      logger.log('info', `Last snapshot for ${option.code} is identical`);
+    if (deepEqual(savedOption.data, option.data)) {
+      logger.log('info', `No changes detected for option ${option.code} (model: ${option.vehicle_model} lang: ${option.lang})`);
       return;
     }
   }
 
-  logger.log('info', `Saving option ${option.code}`);
+  logger.log('info', `Changes detected for option ${option.code}  (model: ${option.vehicle_model} lang: ${option.lang})`);
+
+  const diff = detailedDiff(savedOption?.data || {}, option.data);
 
   // Save the snapshot
-  const saveSnapshot = await supabase.from<IVehicleOptionSnapshot>('vehicle_options_snapshots').insert({
-    code: option.code,
-    lang: option.lang,
-    vehicle_model: option.vehicle_model,
-    data: option.raw_data,
+  const saveChangesDiff = await supabase.from<IVehicleOptionChange>('vehicle_options_changes').insert({
+    option_code: option.code,
+    option_lang: option.lang,
+    option_vehicle_model: option.vehicle_model,
+    diff: diff,
   });
 
-  if (saveSnapshot.error) {
-    logger.log('error', saveSnapshot.error);
+  if (saveChangesDiff.error) {
+    logger.log('error', saveChangesDiff.error);
     return;
   }
 
@@ -64,6 +66,7 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
     effective_date: option.effective_date,
     is_available: true,
     vehicle_model: option.vehicle_model,
+    data: option.data,
   });
 
   if (saveOption.error) {
@@ -92,7 +95,7 @@ export function getOptionsFromStore(storeData: IStoreData, lang: string, model: 
         description: item.description,
         price: item.price,
         lang: lang,
-        raw_data: item,
+        data: item,
         currency: storeData.currency.data,
         effective_date: storeData.effective_date.data,
         updated_at: new Date(),
@@ -109,10 +112,13 @@ export function getOptionsFromStore(storeData: IStoreData, lang: string, model: 
 /**
  * Get raw storeData from the Tesla store
  * @param {string} lang en-US fr-FR
+ * @param {string} vehicleModel m3 mx
  * @returns
  */
 export async function getRawStoreData(lang: string, vehicleModel: string): Promise<object> {
   logger.log('info', 'Scrapping store data');
+
+  const vehicleModelLong = getModelLongName(vehicleModel);
 
   const browser = await puppeteer.launch({
     args: [`'--lang=${lang}'`],
@@ -140,17 +146,21 @@ export async function getRawStoreData(lang: string, vehicleModel: string): Promi
   const urlLangLabel = lang.replace('-', '_');
 
   // init the app a first time
-  await page.goto(`https://www.tesla.com/${vehicleModel}/design`);
+  await page.goto(`https://www.tesla.com/${vehicleModelLong}/design`);
   // wait for the app to be ready
   await page.waitForTimeout(2000);
   // force a redirection with the correct language
-  await page.goto(`https://www.tesla.com/${urlLangLabel}/${vehicleModel}/design#overview`);
+  await page.goto(`https://www.tesla.com/${urlLangLabel}/${vehicleModelLong}/design#overview`);
 
   const rawStoreData = await page.evaluate(() => {
     return (window as any).tesla;
   });
 
   await browser.close();
+
+  if (!rawStoreData) {
+    throw new Error(`No store data found for Model ${vehicleModelLong} and lang ${lang}`);
+  }
 
   return rawStoreData;
 }
@@ -190,38 +200,48 @@ function getDataFromStoreData(storeData: any) {
   return newStoreData;
 }
 
-export function getModelShort(model: string) {
+/**
+ * Get the long model name from the vehicle model short
+ * @param model ms
+ * @returns
+ * @example getModelNameFromModel('ms') => 'models'
+ */
+export function getModelLongName(model: string) {
   switch (model) {
-    case 'model3':
-      return 'm3';
-    case 'modelx':
-      return 'mx';
-    case 'modely':
-      return 'my';
-    case 'models':
-      return 'ms';
+    case 'm3':
+      return 'model3';
+    case 'mx':
+      return 'modelx';
+    case 'my':
+      return 'modely';
+    case 'ms':
+      return 'models';
     default:
       return '';
   }
 }
 
+/**
+ * Get a store object with generated paths for the current model
+ * @param model model (m3, mx, my, ms)
+ * @returns
+ */
 export function getDefaultStoreData(model: string): IStoreData {
-  const short = getModelShort(model);
   return {
     effective_date: {
-      path: ['DSServices', `Lexicon.${short}`, 'effective_date'],
+      path: ['DSServices', `Lexicon.${model}`, 'effective_date'],
     },
     baseConfig: {
-      path: ['DSServices', `Lexicon.${short}`, 'base_configuration'],
+      path: ['DSServices', `Lexicon.${model}`, 'base_configuration'],
     },
     option_group: {
-      path: ['DSServices', `Lexicon.${short}`, 'groups'],
+      path: ['DSServices', `Lexicon.${model}`, 'groups'],
     },
     options: {
-      path: ['DSServices', `Lexicon.${short}`, 'options'],
+      path: ['DSServices', `Lexicon.${model}`, 'options'],
     },
     currency: {
-      path: ['DSServices', 'Lexicon.m3', 'metadata', 'currency_code'],
+      path: ['DSServices', `Lexicon.${model}`, 'metadata', 'currency_code'],
     },
   };
 }

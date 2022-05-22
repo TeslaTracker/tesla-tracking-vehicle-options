@@ -10,8 +10,8 @@ export default interface IVehicleOption {
   currency: string;
   effective_date: string;
   is_available: boolean;
-  raw_data: object;
   vehicle_model: string;
+  data: object;
 }
 
 export type IVehicleOptionDb = Omit<IVehicleOption, 'raw_data'>;
