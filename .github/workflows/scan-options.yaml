@@ -2,9 +2,9 @@ name: Scan options
 on:
   workflow_dispatch:
   schedule:
-    # At minute 0 past every 3rd hour.
-    # https://crontab.guru/every-3-hours
-    - cron: "0 */3 * * *"
+    # every 30 min
+    # https://crontab.guru
+    - cron: "*/30 * * * *"
 jobs:
   scan-options:
     runs-on: ubuntu-latest
@@ -25,10 +25,5 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: | # Scan 30 colors and wait 500 ms between each query
-          yarn start --model model3 --lang en-US
-          yarn start --model model3 --lang fr-FR
-          yarn start --model model3 --lang es-ES
-          yarn start --model modelx --lang en-US
-          yarn start --model modelx --lang fr-FR
-          yarn start --model modelx --lang es-ES
+        run: | # Scan options for a random model and a color language
+          yarn start
