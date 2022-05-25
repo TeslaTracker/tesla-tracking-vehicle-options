@@ -10,7 +10,11 @@
             "name": "Yarn start",
             "runtimeExecutable": "yarn",
             "runtimeArgs": [
-                "start"
+                "start",
+                "--lang",
+                "fr-FR",
+                "--model",
+                "m3"
             ],
             "port": 5858,
             "cwd": "${workspaceRoot}",

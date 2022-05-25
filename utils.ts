@@ -8,6 +8,7 @@ import logger from './logger';
 import { detailedDiff } from 'deep-object-diff';
 import IVehicleOptionChange from './interfaces/VehicleOptionChange.interface';
 import IDeliveryInfo from './interfaces/DeliveryInfo.interface';
+import IVehicleSpecs from './interfaces/VehicleSpecs.interface';
 
 export async function saveStoreOptions(options: IVehicleOption[], supabase: SupabaseClient) {
   logger.log('info', 'Saving store options...');
@@ -130,25 +131,13 @@ export async function scrapStorePage(
 
   const browser = await puppeteer.launch({
     args: [`'--lang=${lang}'`],
+    headless: false,
   });
 
   const page = await browser.newPage();
 
   await page.setExtraHTTPHeaders({
     'Accept-Language': lang,
-  });
-  // Set the language forcefully on javascript
-  await page.evaluateOnNewDocument(() => {
-    Object.defineProperty(navigator, 'language', {
-      get: function () {
-        return lang;
-      },
-    });
-    Object.defineProperty(navigator, 'languages', {
-      get: function () {
-        return [lang];
-      },
-    });
   });
 
   const urlLangLabel = lang.replace('-', '_');
@@ -171,18 +160,8 @@ export async function scrapStorePage(
 
   const deliveryInfos = await retrieveDeliveryInfos(page, lang);
   // Find the base options , prices and delivery dates
-
-  const overviewOptionSelector = '.group--options_block--container'; //data-id => optionId
-  const priceSelector = `.finance-type.finance-type--cash`;
-  const rangeSelector = `[data-id="range"]`;
-  const topSpeedSelector = `[data-id="top-speed"]`;
-  const accelerationSelector = `[data-id="acceleration"]`;
-  const baseOptions = await page.$$('.tds-o-option-label');
-  baseOptions.map(async (option) => {
-    const optionNameContainer = await option.$$('tds-o-label-title');
-    console.log(optionNameContainer);
-  });
-
+  const vehicleSpecs = await retrieveVehicleSpecs(page, lang);
+  console.log(vehicleSpecs);
   await browser.close();
 
   return {
@@ -248,6 +227,39 @@ export async function saveDeliveryInfos(deliveryInfos: IDeliveryInfo[], supabase
       return;
     }
   }
+}
+
+async function retrieveVehicleSpecs(page: puppeteer.Page, lang: string): Promise<IVehicleSpecs[]> {
+  const vehicleSpecs: IVehicleSpecs[] = [];
+
+  const overviewOptionSelector = '.group--options_block--container'; //data-id => optionId
+  const priceSelector = `.group--options_block-container_price`;
+  const rangeSelector = `[data-id="range"]`;
+  const topSpeedSelector = `[data-id="top-speed"]`;
+  const accelerationSelector = `[data-id="acceleration"]`;
+  const baseOptions = await page.$$('.tds-o-option-label');
+
+  const options = await page.$$(overviewOptionSelector);
+
+  for (const option of options) {
+    // select the option and wait for 1sec
+    await option.click();
+    await page.waitForTimeout(500);
+
+    const priceElement = await page.$(priceSelector);
+    const price = await page.evaluate((el) => el.innerText, priceElement);
+
+    const rangeElement = await page.$(rangeSelector);
+    const range = await page.evaluate((el) => el.innerText, rangeElement);
+    console.log(price, range);
+  }
+
+  const price = await page.evaluate((priceSelector) => {
+    return document.querySelector(priceSelector).innerText;
+  });
+  console.log(price);
+
+  return vehicleSpecs;
 }
 
 /**
