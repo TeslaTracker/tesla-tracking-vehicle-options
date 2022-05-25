@@ -7,6 +7,7 @@ import puppeteer from 'puppeteer';
 import logger from './logger';
 import { detailedDiff } from 'deep-object-diff';
 import IVehicleOptionChange from './interfaces/VehicleOptionChange.interface';
+import IDeliveryInfo from './interfaces/DeliveryInfo.interface';
 
 export async function saveStoreOptions(options: IVehicleOption[], supabase: SupabaseClient) {
   logger.log('info', 'Saving store options...');
@@ -116,7 +117,13 @@ export function getOptionsFromStore(storeData: IStoreData, lang: string, model: 
  * @param {string} vehicleModel m3 mx
  * @returns
  */
-export async function getRawStoreData(lang: string, vehicleModel: string): Promise<object> {
+export async function scrapStorePage(
+  lang: string,
+  vehicleModel: string
+): Promise<{
+  rawStoreData: object;
+  deliveryInfos: IDeliveryInfo[];
+}> {
   logger.log('info', 'Scrapping store data');
 
   const vehicleModelLong = getModelLongName(vehicleModel);
@@ -153,17 +160,94 @@ export async function getRawStoreData(lang: string, vehicleModel: string): Promi
   // force a redirection with the correct language
   await page.goto(`https://www.tesla.com/${urlLangLabel}/${vehicleModelLong}/design#overview`);
 
+  //get the raw store data
   const rawStoreData = await page.evaluate(() => {
     return (window as any).tesla;
   });
-
-  await browser.close();
 
   if (!rawStoreData) {
     throw new Error(`No store data found for Model ${vehicleModelLong} and lang ${lang}`);
   }
 
-  return rawStoreData;
+  const deliveryInfos = await retrieveDeliveryInfos(page, lang);
+  // Find the base options , prices and delivery dates
+
+  const overviewOptionSelector = '.group--options_block--container'; //data-id => optionId
+  const priceSelector = `.finance-type.finance-type--cash`;
+  const rangeSelector = `[data-id="range"]`;
+  const topSpeedSelector = `[data-id="top-speed"]`;
+  const accelerationSelector = `[data-id="acceleration"]`;
+  const baseOptions = await page.$$('.tds-o-option-label');
+  baseOptions.map(async (option) => {
+    const optionNameContainer = await option.$$('tds-o-label-title');
+    console.log(optionNameContainer);
+  });
+
+  await browser.close();
+
+  return {
+    rawStoreData,
+    deliveryInfos,
+  };
+}
+
+async function retrieveDeliveryInfos(page: puppeteer.Page, lang: string): Promise<IDeliveryInfo[]> {
+  logger.log('info', `Retrieiving deliveries dates informations...`);
+
+  const deliveryInfos: IDeliveryInfo[] = [];
+  //get the raw store data
+  const eddData: any[] = await page.evaluate(() => {
+    return (window as any).tesla.eddData;
+  });
+
+  // loop through each entry of the edd object
+  for (const eddEntry of eddData) {
+    // skip if there is no delivery date
+    if (!eddEntry.inStart || !eddEntry.inEnd) {
+      continue;
+    }
+
+    deliveryInfos.push({
+      country_code: eddEntry.countryCode,
+      effective_date: eddEntry.effectiveStartDate,
+      start_date: eddEntry.inStart,
+      end_date: eddEntry.inEnd,
+      option_codes: eddEntry.options,
+      vehicle_model: eddEntry.model,
+      lang: lang,
+    });
+  }
+
+  return deliveryInfos;
+}
+
+export async function saveDeliveryInfos(deliveryInfos: IDeliveryInfo[], supabase: SupabaseClient): Promise<void> {
+  logger.log('info', `Saving / updating ${deliveryInfos.length} deliveries dates entry ...`);
+
+  for (const info of deliveryInfos) {
+    // check if delivery info already exists
+    const existingDeliveryInfo = await supabase
+      .from<IDeliveryInfo>('vehicle_delivery_infos')
+      .select('id')
+      .eq('country_code', info.country_code)
+      .eq('effective_date', info.effective_date)
+      .eq('vehicle_model', info.vehicle_model)
+      .eq('start_date', info.start_date)
+      .eq('end_date', info.end_date)
+      .limit(1);
+
+    // skip if info already exists
+    if (existingDeliveryInfo.data && existingDeliveryInfo.data.length > 0) {
+      logger.log('info', `Delivery info already exists for ${info.vehicle_model} ${info.country_code}`);
+      continue;
+    }
+
+    const saveDeliveryInfo = await supabase.from<IDeliveryInfo>('vehicle_delivery_infos').insert(info);
+    if (saveDeliveryInfo.error) {
+      logger.log('error', saveDeliveryInfo.error);
+      return;
+    }
+  }
 }
 
 /**
@@ -246,3 +330,5 @@ export function getDefaultStoreData(model: string): IStoreData {
     },
   };
 }
+
+export function getVehicleBasePrices() {}

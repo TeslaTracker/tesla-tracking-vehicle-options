@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import { getDefaultStoreData, getOptionsFromStore, getRawStoreData, hydrateStoreData, saveStoreOptions } from './utils';
+import { getDefaultStoreData, getOptionsFromStore, scrapStorePage, hydrateStoreData, saveStoreOptions, saveDeliveryInfos } from './utils';
 
 import { Command } from 'commander';
 import logger from './logger';
@@ -35,11 +35,12 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
 
 (async () => {
   logger.log('info', `Language: ${programOpt.lang} - Model: ${programOpt.model}`);
-  const rawStoreData = await getRawStoreData(programOpt.lang, programOpt.model);
+  const scrap = await scrapStorePage(programOpt.lang, programOpt.model);
 
   const defaultStoreData = getDefaultStoreData(programOpt.model);
 
-  const storeData = hydrateStoreData(rawStoreData, defaultStoreData);
+  const storeData = hydrateStoreData(scrap.rawStoreData, defaultStoreData);
   const options = getOptionsFromStore(storeData, programOpt.lang, programOpt.model);
   await saveStoreOptions(options, supabase);
+  await saveDeliveryInfos(scrap.deliveryInfos, supabase);
 })();
