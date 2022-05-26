@@ -31,6 +31,7 @@ export async function saveDeliveryInfos(storeData: IStoreData, lang: string, sup
       .eq('vehicle_model', info.model)
       .eq('start_date', info.inStart)
       .eq('end_date', info.inEnd)
+      .eq('lang', lang)
       .contains('option_codes', info.options)
       .limit(1);
 
