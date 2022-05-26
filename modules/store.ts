@@ -8,22 +8,10 @@ import Logger from '../logger';
 import colors from 'colors';
 const logger = new Logger('store');
 
-/**
- * Get raw storeData from the Tesla store
- * @param {string} lang en-US fr-FR
- * @param {string} vehicleModel m3 mx
- * @returns
- */
-export async function scrapStorePage(
-  lang: string,
-  vehicleModel: string
-): Promise<{
-  rawStoreData: object;
+export async function initBrowser(lang: string): Promise<{
+  browser: puppeteer.Browser;
+  page: puppeteer.Page;
 }> {
-  logger.log('info', 'Scrapping store data');
-
-  const vehicleModelLong = getModelLongName(vehicleModel);
-
   const browser = await puppeteer.launch({
     args: [`'--lang=${lang}'`],
     headless: true,
@@ -34,6 +22,27 @@ export async function scrapStorePage(
   await page.setExtraHTTPHeaders({
     'Accept-Language': lang,
   });
+
+  return { browser, page };
+}
+
+/**
+ * Get raw storeData from the Tesla store
+ * @param {string} lang en-US fr-FR
+ * @param {string} vehicleModel m3 mx
+ * @returns
+ */
+export async function scrapStorePage(
+  lang: string,
+  vehicleModel: string,
+  browser: puppeteer.Browser,
+  page: puppeteer.Page
+): Promise<{
+  rawStoreData: object;
+}> {
+  logger.log('info', 'Scrapping store data');
+
+  const vehicleModelLong = getModelLongName(vehicleModel);
 
   const urlLangLabel = lang.replace('-', '_');
   logger.log('info', `Setting up page ${colors.bold(`https://www.tesla.com/${urlLangLabel}/${vehicleModelLong}/design#overview`)}...`);
@@ -52,11 +61,6 @@ export async function scrapStorePage(
   if (!rawStoreData) {
     throw new Error(`No store data found for Model ${vehicleModelLong} and lang ${lang}`);
   }
-
-  // Find the base options , prices and delivery dates
-  // const vehicleSpecs = await retrieveVehicleSpecs(page, lang);
-
-  await browser.close();
 
   return {
     rawStoreData,
