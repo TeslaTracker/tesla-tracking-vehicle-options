@@ -2,10 +2,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import deepEqual from 'deep-equal';
 
 import { detailedDiff } from 'deep-object-diff';
+import puppeteer from 'puppeteer';
 import IStoreData from '../interfaces/StoreData.interface';
 import IVehicleSpecs, { IVehicleSpecsDb } from '../interfaces/VehicleSpecs.interface';
 import IVehicleSpecsChange from '../interfaces/VehicleSpecsChange.interface';
 import Logger from '../logger';
+import { removeNonNumSymbols } from '../utils';
 const logger = new Logger('specs');
 
 export async function saveStoreSpecs(specs: IVehicleSpecs[], storeData: IStoreData, supabase: SupabaseClient) {
@@ -19,7 +21,7 @@ export async function saveStoreSpec(spec: IVehicleSpecs, storeData: IStoreData, 
   // Retrieive the existing item
   const existingSpec = await supabase
     .from<IVehicleSpecsDb>('vehicle_specs')
-    .select('data')
+    .select('id, data')
     .eq('option_code', spec.option_code)
     .eq('lang', spec.lang)
     .eq('vehicle_model', spec.vehicle_model)
@@ -47,6 +49,7 @@ export async function saveStoreSpec(spec: IVehicleSpecs, storeData: IStoreData, 
       .from<IVehicleSpecs>('vehicle_specs')
       .update({
         data: spec.data,
+        updated_at: new Date(),
       })
       .match({
         id: savedSpec.id,
@@ -107,10 +110,13 @@ export function getSpecsFromStore(storeData: IStoreData, lang: string, model: st
   for (const key in storeData.vehicle_trims.data) {
     if (Object.prototype.hasOwnProperty.call(storeData.vehicle_trims.data, key)) {
       const vehicleTrim = storeData.vehicle_trims.data[key];
+      // add currency into data item
+      vehicleTrim.currency = storeData.currency.data;
+      //
       const spec: IVehicleSpecs = {
         option_code: key,
         data: vehicleTrim,
-        currency: storeData.currency.data,
+
         lang: lang,
         vehicle_model: model,
         acceleration_unit: storeData.acceleration_unit.data,
@@ -123,4 +129,42 @@ export function getSpecsFromStore(storeData: IStoreData, lang: string, model: st
   }
 
   return specs;
+}
+
+/**
+ * Retrieive the trim prices from the html of the store
+ * TODO: find a way to calculate it since this is a bit tricky and unstable
+ * @param storeData
+ * @param page
+ */
+export async function hydratePricesFromStore(storeData: IStoreData, page: puppeteer.Page): Promise<IStoreData> {
+  logger.log('info', 'Retreiving prices from store');
+
+  // loop throught each trim (we only care about the option_code wich is the key)
+  for (const optionCode in storeData.vehicle_trims.data) {
+    logger.log('info', `Scanning for trim ${optionCode}`);
+    if (Object.prototype.hasOwnProperty.call(storeData.vehicle_trims.data, optionCode)) {
+      const priceContainer = await page.$(`[data-id="${optionCode}"] .group--options_block-container_price`);
+      if (!priceContainer) {
+        logger.log('warn', `Could not find price container for ${optionCode}`);
+        continue;
+      }
+
+      const rawPrice = await priceContainer.evaluate((p) => p.textContent);
+
+      if (!rawPrice) {
+        logger.log('warn', `Unable to parse price for ${optionCode}`);
+        continue;
+      }
+
+      const price = removeNonNumSymbols(rawPrice);
+
+      logger.log('info', `Found price ${price} for ${optionCode}`);
+
+      // update the store data
+      storeData.vehicle_trims.data[optionCode].price = price;
+    }
+  }
+
+  return storeData;
 }

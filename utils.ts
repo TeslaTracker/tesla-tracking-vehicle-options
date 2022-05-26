@@ -50,3 +50,11 @@ export function getModelLongName(model: string) {
       return '';
   }
 }
+
+/**
+ * Remove all the non-num symbols from a price and return it as a number
+ * @example removeNonNumSymbols('$1,000.00') => 1000
+ */
+export function removeNonNumSymbols(input: string): number {
+  return Number(input.replace(/[^0-9.-]+/g, ''));
+}
