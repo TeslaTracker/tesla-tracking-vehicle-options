@@ -1,14 +1,38 @@
-import winston from 'winston';
+import colors from 'colors';
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
-  defaultMeta: { service: 'tracker' },
-  transports: [],
-});
+type ErrorLevel = 'error' | 'warn' | 'info' | 'debug' | 'success';
 
-if (process.env.NODE_ENV !== 'development') {
-  logger.add(new winston.transports.Console());
+const logger = {};
+
+export default class Logger {
+  module?: string;
+  constructor(module?: string) {
+    this.module = module;
+  }
+
+  log(level: ErrorLevel, message: string) {
+    console.log(`${getLevelStr(level)}${getModuleStr(this.module)} ${message}`);
+  }
 }
 
-export default logger;
+function getModuleStr(module?: string) {
+  if (!module) {
+    return '';
+  }
+  return colors.bold(` [${module.toUpperCase()}]`);
+}
+
+function getLevelStr(level: ErrorLevel) {
+  switch (level) {
+    case 'error':
+      return colors.red(`(${level})`);
+    case 'warn':
+      return colors.yellow(`(${level})`);
+    case 'debug':
+      return colors.bold(`(${level})`);
+    case 'success':
+      return colors.green(`(${level})`);
+    default:
+      return colors.cyan(`(${level})`);
+  }
+}
