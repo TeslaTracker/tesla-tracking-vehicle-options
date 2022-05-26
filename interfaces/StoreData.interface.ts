@@ -8,7 +8,8 @@ export type StoreDataKey =
   | 'specs_metadata'
   | 'acceleration_unit'
   | 'top_speed_unit'
-  | 'range_unit';
+  | 'range_unit'
+  | 'delivery_infos';
 type IStoreData = {
   [key: string]: {
     path: (string | number)[];

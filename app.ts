@@ -50,5 +50,5 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   await saveStoreOptions(options, supabase);
   const specs = getSpecsFromStore(storeData, programOpt.lang, programOpt.model);
   await saveStoreSpecs(specs, storeData, supabase);
-  await saveDeliveryInfos(scrap.deliveryInfos, supabase);
+  await saveDeliveryInfos(storeData, programOpt.lang, supabase);
 })();

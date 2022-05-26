@@ -2,11 +2,10 @@ import objectPath from 'object-path';
 import IStoreData from '../interfaces/StoreData.interface';
 
 import puppeteer from 'puppeteer';
-import IDeliveryInfo from '../interfaces/DeliveryInfo.interface';
 import { getModelLongName } from '../utils';
-import { retrieveDeliveryInfos } from './delivery';
-import Logger from '../logger';
 
+import Logger from '../logger';
+import colors from 'colors';
 const logger = new Logger('store');
 
 /**
@@ -20,7 +19,6 @@ export async function scrapStorePage(
   vehicleModel: string
 ): Promise<{
   rawStoreData: object;
-  deliveryInfos: IDeliveryInfo[];
 }> {
   logger.log('info', 'Scrapping store data');
 
@@ -38,7 +36,7 @@ export async function scrapStorePage(
   });
 
   const urlLangLabel = lang.replace('-', '_');
-
+  logger.log('info', `Setting up page ${colors.bold(`https://www.tesla.com/${urlLangLabel}/${vehicleModelLong}/design#overview`)}...`);
   // init the app a first time
   await page.goto(`https://www.tesla.com/${vehicleModelLong}/design`);
   // wait for the app to be ready
@@ -55,7 +53,6 @@ export async function scrapStorePage(
     throw new Error(`No store data found for Model ${vehicleModelLong} and lang ${lang}`);
   }
 
-  const deliveryInfos = await retrieveDeliveryInfos(page, lang);
   // Find the base options , prices and delivery dates
   // const vehicleSpecs = await retrieveVehicleSpecs(page, lang);
 
@@ -63,7 +60,6 @@ export async function scrapStorePage(
 
   return {
     rawStoreData,
-    deliveryInfos,
   };
 }
 
@@ -142,6 +138,9 @@ export function getDefaultStoreData(model: string): IStoreData {
     },
     range_unit: {
       path: ['DSServices', `Lexicon.${model}`, 'metadata', 'specs', 'data', 0, 'meta', 'specs', 'range', 'units'],
+    },
+    delivery_infos: {
+      path: ['eddData'],
     },
   };
 }

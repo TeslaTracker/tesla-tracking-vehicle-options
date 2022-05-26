@@ -6,7 +6,7 @@ import IStoreData from '../interfaces/StoreData.interface';
 import IVehicleSpecs, { IVehicleSpecsDb } from '../interfaces/VehicleSpecs.interface';
 import IVehicleSpecsChange from '../interfaces/VehicleSpecsChange.interface';
 import Logger from '../logger';
-const logger = new Logger('delivery');
+const logger = new Logger('specs');
 
 export async function saveStoreSpecs(specs: IVehicleSpecs[], storeData: IStoreData, supabase: SupabaseClient) {
   logger.log('info', 'Saving store specs...');
@@ -80,6 +80,9 @@ export async function saveStoreSpec(spec: IVehicleSpecs, storeData: IStoreData, 
       lang: spec.lang,
       vehicle_model: spec.vehicle_model,
       data: spec.data,
+      acceleration_unit: storeData.acceleration_unit.data,
+      range_unit: storeData.range_unit.data,
+      top_speed_unit: storeData.top_speed_unit.data,
     });
 
     if (createSpec.error) {

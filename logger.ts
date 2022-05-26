@@ -31,7 +31,7 @@ function getLevelStr(level: ErrorLevel) {
     case 'debug':
       return colors.bold(`(${level})`);
     case 'success':
-      return colors.bold(`(${level})`);
+      return colors.green(`(${level})`);
     default:
       return colors.cyan(`(${level})`);
   }

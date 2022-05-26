@@ -47,6 +47,7 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
       .from<IVehicleOption>('vehicle_options')
       .update({
         data: option.data,
+        updated_at: new Date(),
       })
       .match({
         id: savedOption.id,
