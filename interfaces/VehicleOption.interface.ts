@@ -14,4 +14,6 @@ export default interface IVehicleOption {
   data: object;
 }
 
-export type IVehicleOptionDb = Omit<IVehicleOption, 'raw_data'>;
+export type IVehicleOptionDb = Omit<IVehicleOption, 'raw_data'> & {
+  id: number;
+};

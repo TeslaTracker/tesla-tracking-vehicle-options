@@ -1,9 +1,14 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import { getDefaultStoreData, getOptionsFromStore, scrapStorePage, hydrateStoreData, saveStoreOptions, saveDeliveryInfos } from './utils';
-
+import colors from 'colors';
 import { Command } from 'commander';
-import logger from './logger';
+import Logger from './logger';
+import { getDefaultStoreData, hydrateStoreData, scrapStorePage } from './modules/store';
+import { getOptionsFromStore, saveStoreOptions } from './modules/options';
+import { getSpecsFromStore, saveStoreSpecs } from './modules/specs';
+import { saveDeliveryInfos } from './modules/delivery';
+
+const logger = new Logger();
 
 const langs = ['fr-FR', 'en-GB', 'en-US', 'de-DE', 'es-ES'];
 const vehicles = ['m3', 'my', 'ms', 'mx'];
@@ -34,7 +39,8 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
 // }
 
 (async () => {
-  logger.log('info', `Language: ${programOpt.lang} - Model: ${programOpt.model}`);
+  console.log(`\n\n\n${colors.red('[ TESLA TRACKER ]')} | Language: ${colors.bold(programOpt.lang)} - Model: ${colors.bold(programOpt.model)}\n\n\n`);
+  logger.log('info', `Starting tracker`);
   const scrap = await scrapStorePage(programOpt.lang, programOpt.model);
 
   const defaultStoreData = getDefaultStoreData(programOpt.model);
@@ -42,5 +48,7 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   const storeData = hydrateStoreData(scrap.rawStoreData, defaultStoreData);
   const options = getOptionsFromStore(storeData, programOpt.lang, programOpt.model);
   await saveStoreOptions(options, supabase);
+  const specs = getSpecsFromStore(storeData, programOpt.lang, programOpt.model);
+  await saveStoreSpecs(specs, storeData, supabase);
   await saveDeliveryInfos(scrap.deliveryInfos, supabase);
 })();
