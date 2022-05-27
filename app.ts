@@ -7,20 +7,18 @@ import { getDefaultStoreData, hydrateStoreData, initBrowser, scrapStorePage } fr
 import { getOptionsFromStore, saveStoreOptions } from './modules/options';
 import { getSpecsFromStore, hydratePricesFromStore, saveStoreSpecs } from './modules/specs';
 import { saveDeliveryInfos } from './modules/delivery';
+import { langs, models } from './options';
 
 const logger = new Logger();
 
-const langs = ['fr-FR', 'en-GB', 'en-US', 'de-DE', 'es-ES'];
-const vehicles = ['m3', 'my', 'ms', 'mx'];
-
 const randLang = langs[Math.floor(Math.random() * langs.length)];
-const randVehicle = vehicles[Math.floor(Math.random() * vehicles.length)];
+const randModel = models[Math.floor(Math.random() * models.length)];
 
 const program = new Command();
 // cli config
 program
-  .option('-l, --lang <lang>', 'lang to check', randLang)
-  .option('-m, --model <model>', 'Vehicle model to check (short format : ms m3 mx ...)', randVehicle)
+  .option('-l, --lang [langs...]', 'langs to check', `${randLang}`)
+  .option('-m, --model [models...]', 'Vehicle models to check (short format : ms m3 mx ...)', `${randModel}`)
   .option('-t, --test', 'Test mode');
 program.parse(process.argv);
 const programOpt = program.opts();
@@ -31,20 +29,54 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   console.log(`\n\n\n${colors.red('[ TESLA TRACKER ]')} | Language: ${colors.bold(programOpt.lang)} - Model: ${colors.bold(programOpt.model)}\n\n\n`);
   logger.log('info', `Starting tracker`);
 
-  const { browser, page } = await initBrowser(programOpt.lang);
-  const scrap = await scrapStorePage(programOpt.lang, programOpt.model, browser, page);
+  // apply star parameters (apply all)
+  if (programOpt.lang[0] === '*') {
+    programOpt.lang = langs;
+  }
 
-  const defaultStoreData = getDefaultStoreData(programOpt.model);
+  if (programOpt.model[0] === '*') {
+    programOpt.model = models;
+  }
+
+  // force opts to be array
+  if (!Array.isArray(programOpt.lang)) {
+    programOpt.lang = [programOpt.lang];
+  }
+
+  if (!Array.isArray(programOpt.model)) {
+    programOpt.model = [programOpt.model];
+  }
+  //
+
+  logger.log('info', `Running ${colors.bold(String(programOpt.lang.length * programOpt.model.length))} job(s)`);
+
+  // run for each lang
+  for (const lang of programOpt.lang) {
+    for (const model of programOpt.model) {
+      await runJob(lang, model);
+    }
+  }
+
+  //
+})();
+
+async function runJob(lang: string, model: string) {
+  logger.log('info', `Starting job for ${colors.bold(lang)} - ${colors.bold(model)}`);
+  const { browser, page } = await initBrowser(lang);
+  const scrap = await scrapStorePage(lang, model, browser, page);
+
+  const defaultStoreData = getDefaultStoreData(model);
 
   let storeData = hydrateStoreData(scrap.rawStoreData, defaultStoreData);
   storeData = await hydratePricesFromStore(storeData, page);
 
-  const options = getOptionsFromStore(storeData, programOpt.lang, programOpt.model);
+  const options = getOptionsFromStore(storeData, lang, model);
   await saveStoreOptions(options, supabase);
-  const specs = getSpecsFromStore(storeData, programOpt.lang, programOpt.model);
+  const specs = getSpecsFromStore(storeData, lang, model);
   await saveStoreSpecs(specs, storeData, supabase);
-  await saveDeliveryInfos(storeData, programOpt.lang, supabase);
+  await saveDeliveryInfos(storeData, lang, supabase);
 
   // close the browser
   await browser.close();
-})();
+  logger.log('success', `Job done for ${colors.bold(lang)} - ${colors.bold(model)}`);
+}
