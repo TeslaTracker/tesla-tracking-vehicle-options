@@ -31,11 +31,11 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   logger.log('info', `Starting tracker`);
 
   // apply star parameters (apply all)
-  if (programOpt.lang[0] === '*') {
+  if (programOpt.lang[0] === 'all') {
     programOpt.lang = langs;
   }
 
-  if (programOpt.model[0] === '*') {
+  if (programOpt.model[0] === 'all') {
     programOpt.model = models;
   }
 

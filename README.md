@@ -9,7 +9,7 @@
 **Note:**
 
 - _Each parameter can contain multiple values_
-- _Use the `*` parameter to use all options_
+- _Use the `all` parameter to use all options_
 
 `-l` `--lang` : Language to scrap the data in can
 
