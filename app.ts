@@ -26,6 +26,7 @@ const programOpt = program.opts();
 const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_SERVICE_KEY || '');
 
 (async () => {
+  const startTime = new Date();
   console.log(`\n\n\n${colors.red('[ TESLA TRACKER ]')} | Language: ${colors.bold(programOpt.lang)} - Model: ${colors.bold(programOpt.model)}\n\n\n`);
   logger.log('info', `Starting tracker`);
 
@@ -48,7 +49,9 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
   }
   //
 
-  logger.log('info', `Running ${colors.bold(String(programOpt.lang.length * programOpt.model.length))} job(s)`);
+  const jobsCount = programOpt.lang.length * programOpt.model.length;
+
+  logger.log('info', `Running ${colors.bold(String(jobsCount))} job(s)`);
 
   // run for each lang
   for (const lang of programOpt.lang) {
@@ -56,6 +59,10 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
       await runJob(lang, model);
     }
   }
+
+  const endTime = new Date();
+
+  logger.log('success', `${colors.bold(String(jobsCount))} jobs done in ${colors.bold(String((endTime.getTime() - startTime.getTime()) / 1000))}s`);
 
   //
 })();
