@@ -56,5 +56,5 @@ export function getModelLongName(model: string) {
  * @example removeNonNumSymbols('$1,000.00') => 1000
  */
 export function removeNonNumSymbols(input: string): number {
-  return Number(input.replace(/[^0-9.-]+/g, ''));
+  return Number(input.replace(/[^0-9-]+/g, ''));
 }

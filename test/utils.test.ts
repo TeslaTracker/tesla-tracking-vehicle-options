@@ -12,7 +12,9 @@ describe('Model Long', () => {
 
 describe('removeNonNumSymbols', () => {
   it('Should remove all non numeric characters form a string and return a number', async () => {
-    expect(removeNonNumSymbols('100.22,23')).to.equal(100.2223);
+    expect(removeNonNumSymbols('100.220')).to.equal(100220);
+    expect(removeNonNumSymbols('100,220')).to.equal(100220);
     expect(removeNonNumSymbols('123456')).to.equal(123456);
+    expect(removeNonNumSymbols('49.990')).to.equal(49990);
   });
 });
