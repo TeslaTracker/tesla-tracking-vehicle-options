@@ -2,9 +2,9 @@ name: Scan options
 on:
   workflow_dispatch:
   schedule:
-    # every 60 min
+    # every 3 hours
     # https://crontab.guru
-    - cron: "*/60 * * * *"
+    - cron: "0 */3 * * *"
 jobs:
   scan-options:
     runs-on: ubuntu-latest
