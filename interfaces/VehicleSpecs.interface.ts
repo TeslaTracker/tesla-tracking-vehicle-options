@@ -5,6 +5,8 @@ export default interface IVehicleSpecs {
 
   option_code: string;
   data: {
+    name: string;
+    group: string;
     acceleration: number;
     price: number;
     top_speed: number;
