@@ -9,7 +9,7 @@ export default interface IVehicleSpecs {
     group: string;
     acceleration: number;
     price: number;
-    top_speed: number;
+    topspeed: number;
     range: number;
     currency: string;
   };
