@@ -27,7 +27,7 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
 
   let savedOption: IVehicleOptionDb | null = null;
 
-  // check if the last snapshot of this spec is identical
+  // check if the last snapshot of this option is identical
   if (existingOption.data && existingOption.data[0]) {
     savedOption = existingOption.data[0];
 
@@ -37,11 +37,11 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
     }
   }
 
-  // if spec don't already exists OR a diff is detected
+  // if option  don't already exists OR a diff is detected
 
   logger.log('info', `Changes detected for option ${option.code}  (model: ${option.vehicle_model} lang: ${option.lang})`);
 
-  // if spec already exists, update it
+  // if option  already exists, update it
   if (savedOption) {
     const updateOption = await supabase
       .from<IVehicleOption>('vehicle_options')
@@ -75,20 +75,20 @@ export async function saveStoreOption(option: IVehicleOption, supabase: Supabase
 
     logger.log('success', `Updated option ${option.code}  (model: ${option.vehicle_model} lang: ${option.lang})`);
   } else {
-    // if spec doesn't already exists, create it
-    const createSpec = await supabase.from<IVehicleOption>('vehicle_specs').insert({
+    // if option doesn't already exists, create it
+    const createOption = await supabase.from<IVehicleOption>('vehicle_options').insert({
       code: option.code,
       lang: option.lang,
       vehicle_model: option.vehicle_model,
       data: option.data,
     });
 
-    if (createSpec.error) {
-      logger.log('error', createSpec.error.message);
+    if (createOption.error) {
+      logger.log('error', createOption.error.message);
       return;
     }
 
-    logger.log('success', `Created spec ${option.code} (model: ${option.vehicle_model} lang: ${option.lang})`);
+    logger.log('success', `Created option ${option.code} (model: ${option.vehicle_model} lang: ${option.lang})`);
   }
 }
 
