@@ -16,3 +16,4 @@
 `-m` `--model` : Vehicle model to get dthe data from
 
 **Example** `yarn start --lang fr-FR en-GB --model m3 my`
+
